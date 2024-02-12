@@ -4,6 +4,8 @@ Heavily inspired by [macOSpilot](https://github.com/elfvingralf/macOSpilot-ai-as
 
 Otto is a personal assistant for macOS that uses a local Whisper model to transcribe audio, listen for wake words, and answer questions using OpenAI's GPT-3. It's designed to be a simple, easy-to-use, privacy-focused, and extensible alternative to Siri, Alexa, and other voice assistants.
 
+-**Mostly local:** Everything but the LLM call is local. Ideally, I'll transition it to a local LLM, but I didn't want it eating all my computer resources.
+
 - **Trigger with keyboard shortcut or your voice, speak your question:** Say "Hey Otto" or hit CMD + SHIFT + ' to trigger the assistant, then ask your question. You can also type your question if you prefer.
 
 - **Natural conversation:** The assistant is fast, and pauses after answering for you to ask follow-up questions. The process feels natural, like a human-to-human conversation. It also remembers context from previous questions, so you can ask follow-up questions without repeating the context.

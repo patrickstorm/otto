@@ -1,13 +1,12 @@
 const { ipcRenderer } = require("electron");
 
-let mediaRecorder; // Define mediaRecorder in a broader scope
-let audioChunks = []; // Define audioChunks in a broader scope
+let mediaRecorder;
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-ipcRenderer.on("push-vision-response-to-windows", (event, visionResponse) => {
+ipcRenderer.on("display-on-both-windows", (event, visionResponse) => {
   // Get the analysis container
   const analysisContainer = document.getElementById("analysis");
   updateWindowMessage(visionResponse);
@@ -17,56 +16,57 @@ ipcRenderer.on("push-question-to-windows", (event, questionText) => {
   updateWindowMessage(`${questionText} ... thinking...`);
 });
 
+let audioChunks = [];
+let isRecording = false;
+let firstChunk = null;
+let curChunks = [];
+
 // This triggers a 500 ms audio/microphone recording as soon as the app loads. It's a work-around to address an issue seen on some machines where the first audio recording doesn't work.
 ipcRenderer.on("init-mediaRecorder", async () => {
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   mediaRecorder = new MediaRecorder(stream);
-  mediaRecorder.start();
-  sleep(1);
-  mediaRecorder.stop();
+  mediaRecorder.start(200);
+
+  mediaRecorder.addEventListener("dataavailable", async (event) => {
+    if (event.data.size > 0) {
+      if (!firstChunk) {
+        firstChunk = event.data;
+      } else {
+        if (isRecording) audioChunks.push(event.data);
+        curChunks.push(event.data);
+      }
+    }
+    if (curChunks.length > 4) {
+      const newSetOfChunks = [firstChunk, ...curChunks];
+      const audioBlob = new Blob(newSetOfChunks, { type: "audio/wav" });
+      const arrayBuffer = await audioBlob.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      ipcRenderer.send("audio-chunk", buffer);
+      curChunks = curChunks.slice(-1);
+    }
+  });
 });
 
 ipcRenderer.on("start-recording", async () => {
-  try {
-    updateWindowMessage("Recording in progress...");
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaRecorder = new MediaRecorder(stream); // Use the broader scoped mediaRecorder
-    audioChunks = []; // Reset audioChunks for a new recording
+  isRecording = true;
+  audioChunks = [firstChunk];
 
-    mediaRecorder.addEventListener("dataavailable", (event) => {
-      audioChunks.push(event.data);
-    });
-
-    mediaRecorder.addEventListener("stop", async () => {
-      const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
-
-      // Convert Blob to ArrayBuffer
-      const arrayBuffer = await audioBlob.arrayBuffer();
-
-      // Convert ArrayBuffer to Buffer
-      const buffer = Buffer.from(arrayBuffer);
-
-      // Send the buffer to the main process
-      ipcRenderer.send("audio-buffer", buffer);
-    });
-
-    mediaRecorder.start();
-  } catch (error) {
-    console.error("Error accessing the microphone", error);
-    updateWindowMessage("Failed to record microphone...");
-  }
+  // play a sound to indicate recording has started
+  const audio = new Audio("../assets/beep.mp3");
+  audio.volume = 0.6;
+  audio.play();
 });
 
-ipcRenderer.on("stop-recording", () => {
-  // Stop the media recorder
+ipcRenderer.on("stop-recording", async () => {
+  isRecording = false;
   updateWindowMessage("Processing...");
-
-  if (mediaRecorder && mediaRecorder.state !== "inactive") {
-    mediaRecorder.stop();
-  }
+  const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+  const arrayBuffer = await audioBlob.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+  ipcRenderer.send("audio-chunks", buffer);
 });
 
-ipcRenderer.on("add-window-name-to-app", (event, windowName) => {
+ipcRenderer.on("add-window-name-to-app", (event) => {
   const analysisContainer = document.getElementById("analysis");
 
   // Create a new section for this window
@@ -74,7 +74,7 @@ ipcRenderer.on("add-window-name-to-app", (event, windowName) => {
   windowSection.className = "window-section";
 
   const title = document.createElement("h3");
-  title.textContent = `${windowName}`;
+  title.textContent = `Speech incoming`;
   windowSection.appendChild(title);
 
   const message = document.createElement("div");

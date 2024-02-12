@@ -1,9 +1,5 @@
 const { ipcRenderer } = require("electron");
 
-ipcRenderer.on("add-window-name-to-app", (event, windowName) => {
-  updateWindowMessage(`Window Selected: ${windowName}`);
-});
-
 ipcRenderer.on("stop-recording", () => {
   // Stop the media recorder
   updateWindowMessage("Processing...");

@@ -1,8 +1,9 @@
 {
   "name": "macospilot-ai-assistant",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "src/index.js",
   "dependencies": {
+    "@langchain/openai": "^0.0.14",
     "active-win": "^8.1.1",
     "axios": "^1.6.2",
     "buffer": "^6.0.3",
@@ -13,8 +14,15 @@
     "fluent-ffmpeg": "^2.1.2",
     "form-data": "^4.0.0",
     "fs": "^0.0.1-security",
+    "install": "^0.13.0",
+    "langchain": "^0.1.17",
+    "node-wav": "^0.0.2",
+    "nodejs-whisper": "^0.1.6",
+    "npm": "^10.4.0",
     "openai": "^4.20.1",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "simple-tts-mp3": "^1.1.0",
+    "smart-whisper": "^0.7.0"
   },
   "scripts": {
     "start": "electron .",

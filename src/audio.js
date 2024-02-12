@@ -20,10 +20,8 @@ const {
   getNotificationWindow,
   updateNotificationWindowText,
 } = require("./ui");
-const { get } = require("http");
-const path = require("path");
 
-const WAKE_WORDS = ["hey auto", "hey otto"];
+const WAKE_WORDS = ["hey auto", "hey otto", "hey anna", "hey ana"];
 let whisper = null;
 
 const handleAudio = async (audioBuffer) => {
@@ -135,7 +133,8 @@ const handle2SecAudio = (audioBuffer) => {
               onShortCutTriggered();
             } else if (
               !recordingVoiceStarted &&
-              !isEmptyRecording(transcribedText)
+              !isEmptyRecording(transcribedText) &&
+              numChunksInRecording > 1 // Sometimes first chunk has extra junk
             ) {
               console.log("-- STARTED", transcribedText);
               recordingVoiceStarted = true;
@@ -246,10 +245,10 @@ const transcribeUserRecording = async (wavFilePath) => {
   }
 };
 
-const getModel = async (modelName = "tiny.en") => {
+const getModel = async (modelName = "base.en") => {
   const modelExists = manager.check(modelName);
   if (!modelExists) {
-    console.log("Whisper model doesn't existsSync, downloading");
+    console.log("Whisper model doesn't exist, downloading");
     await manager.download(modelName);
   }
   const resolved = manager.resolve(modelName);
@@ -272,15 +271,16 @@ function read_wav(file) {
 const sendToWhisper = async (wavFilePath) => {
   if (!whisper) {
     const model = await getModel();
-    whisper = new Whisper(model, { gpu: true });
+    whisper = await new Whisper(model, { gpu: true });
   }
   const wav = wavFilePath;
+  console.log(wavFilePath);
   const pcm = read_wav(wav);
   const task = await whisper.transcribe(pcm, {
     language: "en",
   });
   const result = await task.result;
-  console.log("result: ", result[0].text);
+  console.log("Transcribe result: ", result[0].text);
   // await whisper.free();
   return result[0].text;
 };
@@ -291,4 +291,5 @@ module.exports = {
   speakLlmResponse,
   transcribeUserRecording,
   handle2SecAudio,
+  getModel,
 };

@@ -20,6 +20,7 @@ const {
   handleAudio,
   onShortCutTriggered,
   handle2SecAudio,
+  getModel,
 } = require("./audio");
 const { setup } = require("./setup");
 const { keyboardShortcut } = require("./constants");
@@ -39,7 +40,8 @@ ipcMain.on("audio-chunk", (event, audioChunk, sentChunksCount) => {
 });
 
 // Run when Electron app is ready
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  await getModel();
   setup();
 
   globalShortcut.register(keyboardShortcut, onShortCutTriggered);

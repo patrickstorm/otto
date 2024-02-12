@@ -16,7 +16,7 @@ Make sure you have NodeJS installed on your machine. Then clone the repo and fol
 
 ```bash
 
-git  clone  https://github.com/elfvingralf/macOSpilot-ai-assistant.git
+git  clone  https://github.com/patrickstorm/otto.git
 
 ```
 
